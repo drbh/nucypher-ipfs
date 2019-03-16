@@ -6,4 +6,3 @@ except Exception as e: # should be more specific ConnectionRefusedError, NewConn
     print("Automatic Mode A Public Gateway will be used as a fallback")
     ipfs_gateway_api = ipfsapi.connect('https://ipfs.infura.io', 5001)
 
-

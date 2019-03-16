@@ -1,105 +1,82 @@
 # NuCypher + IPFS
 
 
-We aim to provider a simple interface between IPFS and NuCypher. In this project we have a dev copy of nucypher which we run in federated mode. 
+🚀 Welcome to the ncipfs project! 
 
-This demo just replaces the filestore in the heartbeat demo with IPFS as the filestore.
 
-## Deploying Local Fleet
+![logo](ncipfs.png)
 
-```
-git clone https://github.com/nucypher/nucypher.git
-cd nucypher
-pipenv install
-pipenv shell
-```
 
-now we start the fleet
-```
-sh scripts/local_fleet/run_local_fleet.sh 
-```
+## Basic Usage Spec
 
-you should see 
+#### Setup
 
 ```
-(nucypher) bash-3.2$ sh scripts/local_fleet/run_local_fleet.sh 
-Starting Local Development Fleet...
-Starting Lonely Ursula...
-Starting Ursula #2...
-Starting Ursula #3...
-(nucypher) bash-3.2$ historu
+from ncipfs import main
+
+client = main.ncipfs()
 ```
 
-## Setup Edited Example
-
-awesome, now in the same console we'll open the `ipfs` enabled app...
-
-
+Connect to Urslas and IPFS Gateway - in this case we connect to two locally running instances
 ```
-git clone https://github.com/drbh/nucypher-ipfs.git
-
-cd nucypher-ipfs
-pipenv install --skip-lock
-pipenv shell
+client.connect(nucypher_network="localhost:11500",
+          ipfs_api_gateway="https://ipfs.infura.io:5001")
 ```
 
-## Running Edited Example
-
-
-### Alice creates policy and device write heartbeat data to IPFS
-
+Now making or loading in an identity is easy
 ```
-python heartbeat_demo/alicia.py 
+client.load_user("alice_ipfs_user/")
 ```
 
-*ps: you'll also see 3 json files get created that are the keys and policy pretaining this data*
+#### Securing data
 
-new output will show the `CID` of the bytes that were written to IPFS
+we can set the label and contents easily
 ```
-🚀 ADDING TO IPFS D-STORAGE NETWORK 🚀
-File Address:	QmYYri78XX8uyDDEPHsbeuaujtENwhgzGPRtRhPiA1NBVy
-```
-
-*you can check that its really in IPFS by fetching it from a gateway*
-```
-http://cloudflare-ipfs.com/ipfs/QmYYri78XX8uyDDEPHsbeuaujtENwhgzGPRtRhPiA1NBVy
+my_label = b'ncipfs_is_awesome.txt'
+my_contents = "arbitrary data that is stored on IPFS"
 ```
 
-A 13kb file should download (assuming it still cached - or use your own hash) and it is the encrypted heartbeat data. 
-
-
-## The Doctor now reads the file from IPFS and can decrypt
-
+now we make a key and add the files to IPFS
 ```
-python heartbeat_demo/doctor.py QmYYri78XX8uyDDEPHsbeuaujtENwhgzGPRtRhPiA1NBVy
+pubkey = client.make_key_from_label(my_label)
+cid = client.add_contents(pubkey, my_contents)
 ```
 
+#### Permissioning data
 
+Awesome now all we need to do is add the content to that file and we are returned a CID
 ```
-🚀 FETCHING FROM IPFS D-STORAGE NETWORK 🚀
-Accessing File:	QmYYri78XX8uyDDEPHsbeuaujtENwhgzGPRtRhPiA1NBVy
+from umbral.keys import UmbralPrivateKey, UmbralPublicKey
+
+enc_privkey = UmbralPrivateKey.gen_key()
+sig_privkey = UmbralPrivateKey.gen_key()
+
+enc_pubkey = enc_privkey.get_pubkey()
+sig_pubkey = sig_privkey.get_pubkey()
+
+label = b'ncipfs_is_awesome.txt'
+m, n = 2, 3
+
+policy = client.create_access_policy(
+    enc_pubkey=enc_pubkey, 
+    sig_pubkey=sig_pubkey, 
+    label=label, 
+    m=m, 
+    n=n   
+)
+print(policy)
 ```
 
+#### Accessing data
 
-yay you'll get an output like
+We get the recpients identity (with their keys)
+```
+doctor = client.load_recipent(enc_privkey, sig_privkey)
+print(doctor)
 ```
 
-----------------------------------❤︎ (77 BPM)                                                Retrieval time:    92.84 ms
---------------------------------❤︎ (76 BPM)                                                  Retrieval time:    94.02 ms
-------------------------------------------❤︎ (81 BPM)                                        Retrieval time:    92.02 ms
-----------------------------------------❤︎ (80 BPM)                                          Retrieval time:    92.81 ms
-------------------------------------❤︎ (78 BPM)                                              Retrieval time:    97.02 ms
-------------------------------------❤︎ (78 BPM)                                              Retrieval time:    98.01 ms
---------------------------------❤︎ (76 BPM)                                                  Retrieval time:    95.03 ms
---------------------------------------❤︎ (79 BPM)                                            Retrieval time:    91.29 ms
-----------------------------------------❤︎ (80 BPM)                                          Retrieval time:   105.53 ms
---------------------------------------❤︎ (79 BPM)                                            Retrieval time:    91.50 ms
+Lastly we can fetch the files and get them reencrypted for this recpeients access only!
 ```
-
-# Next Steps
-
-This is just a POC to test the `ipfsapi` Python package with NuCypher. There should be some work done to standardize this datasource. Also more complex ACL like a folder with many files.
-
-In this POC we also implemented a tiny failover feature, where if no IPFS node is running locally it fallsback to infuras IPFS gateway.
-
-
+message = client.get_file_and_decrypt(doctor, policy, cid)
+print(message)
+```
