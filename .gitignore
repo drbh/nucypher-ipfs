@@ -1,4 +1,6 @@
 bak/
+alice_ipfs_user/
 *.json
 */.DS_Store
 .DS_Store
+ncipfs/__pycache__/
