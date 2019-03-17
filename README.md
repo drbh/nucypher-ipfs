@@ -1,6 +1,6 @@
 # NCIPFS
 
-[Logo]("ncipfs.png")
+[Logo](ncipfs.png)
 
 
 [![Python 3.6](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/) [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
