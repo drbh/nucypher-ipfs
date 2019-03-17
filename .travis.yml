@@ -1,1 +1,5 @@
 language: python
+
+before_script:
+  - pip install --upgrade pip setuptools
+  - pip install -r requirements.txt
