@@ -55,7 +55,57 @@ pipenv install
 pipenv shell
 ```
 
-## How to use
+
+## Starting a local NuCypher network
+
+```bash
+git clone https://github.com/nucypher/nucypher.git
+cd nucypher
+pipenv install
+pipenv shell
+sh scripts/local_fleet/run_local_fleet.sh
+```
+
+you should see this if successful
+```
+Starting Local Development Fleet...
+Starting Lonely Ursula...
+Starting Ursula #2...
+Starting Ursula #3...
+```
+
+## How to use the webapp
+
+![app](webapp.png)
+
+In order to best understand the integrations that will best help future developers, we propose a novel web app using the lower level `ncipfs library`.
+
+The application is a data sharing program that allows a user to enter a label and file contents, this is then encrypted and stored on IPFS. Another users can share their public recipient keys and the orginator can then add permssion policies to thier encrypted file. The other user can then download this file into thier web app. 
+
+```
+python server.py 5000
+```
+
+now navigate to `localhost:5000`
+
+here you can enter a name and it will generate both Alive and Bob charater keys for the user. It generates new Alice on each reconnect, and new Bob's when you make a new user. The Bob keys are what allow you to access files that have been shared with you. It is important they are persisted. 
+
+now in another shell run 
+
+```
+python server.py 4999
+```
+
+and navigate to `localhost:4999`
+
+Now you have two server running - both are acting as a different Alice+Bob pair on the locally running NuCypher network. These nodes can now pass public data between them, which will allow them to locate, download and decrypt messages stored on IPFS.
+
+#### Alot to do!
+
+This app is functional but not useful. It showcases the ability to wrap up `ncipfs` as a server and create a working sercure webapp. However it does not manager users well, it only sends strings (and we should be able to encrypt files in place). It does not helpt transfer the policy keys to the recpient and it needs alot of UI work. Hopefully it serves as a base place for understanding the `ncipfs` project.
+
+
+## How to use as a library
 
 If you want to use this in dev, you'll have to copy the current `ncipfs` files into your program or change the scripts directory to the projects root. This way you can import ncipfs.  
 
