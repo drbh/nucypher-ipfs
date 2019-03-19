@@ -98,6 +98,8 @@ python server.py 4999
 
 and navigate to `localhost:4999`
 
+![app](webapp2.png)
+
 Now you have two server running - both are acting as a different Alice+Bob pair on the locally running NuCypher network. These nodes can now pass public data between them, which will allow them to locate, download and decrypt messages stored on IPFS.
 
 #### Alot to do!
