@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ncipfs demo app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css'>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="ui upload-drop" id="app">
+        <aside class="ui__sidebar">
+            <div class="logo_header">NCIPFS</div>
+            <p class="sublogo">The easy way to securely IPFS</p>
+            <hr class="hr_line" />
+            <br />
+            <br />
+            <!-- <h2>Config</h2> -->
+            <!-- <hr class="hr_line" /> -->
+            <span class="sidebar_header"> <i class="fa fa-gear"></i> Config</span>
+            <!-- <hr class="hr_line" /> -->
+            <!-- <input type="text" @keyup.enter="addItem"> -->
+            <ul class="file-tree">
+                <label>NuCypher</label><br />
+                <input type="text" id="nucypher_network" @keyup.enter="updateConnection" v-model="nucypher_network"><br />
+                <label>IPFS</label><br />
+                <input type="text" id="ipfs_api_gateway" @keyup.enter="updateConnection" v-model="ipfs_api_gateway"><br />
+            </ul>
+            <br><br>
+            <span class="sidebar_header"> <i class="fa fa-user"></i> User</span>
+            <ul class="file-tree">
+                <label>My Encryptor Key Directory</label><br />
+                <input disabled type="text" id="local_user_directory" @keyup.enter="changeLocalUser" v-model="local_user_directory"><br />
+            </ul>
+            <ul class="file-tree">
+                <label>My Recipient Keys</label><br />
+                <span class="my-recipient-keys">
+                    <li v-if="repc_keys !== null" @click='copyTestingCode' :value="repc_keys.enc"> {{ repc_keys.enc.substring(0,20)+"..." }}</li>
+                    <li v-if="repc_keys !== null" @click='copyTestingCode' :value="repc_keys.sig"> {{ repc_keys.sig.substring(0,20)+"..." }}</li>
+                </span>
+            </ul>
+            <!-- /.file-tree -->
+        </aside>
+        <!-- /.sidebar -->
+        <main class="ui__main">
+            <div class="ui__menu">
+                <a href="javascript:void(0);" class="ui__btn sidebar-toggle"></a>
+                <a href="javascript:void(0);" data-modal="upload-modal" class="ui__btn upload-btn" id="step1"></a>
+                <a href="javascript:void(0);" data-modal="download-modal" class="ui__btn download-btn">
+                    <i class="fa fa-cloud-download" aria-hidden="true"></i>
+                </a>
+                <ul class="file-path">
+                    <li><a href="#">UI</a></li>
+                    <li><a href="#">Project A</a></li>
+                </ul>
+                <!-- /.file-path -->
+                <div class="connected-info" v-if="isLoggedIn === true"><i class="fa fa-toggle-on" aria-hidden="true"></i></div>
+                <div class="connected-info" v-if="isLoggedIn === false"><i class="fa fa-toggle-off" aria-hidden="true"></i></div>
+                <div class="connected-info" v-if="isConnected === true"><i class="fa fa-plug" aria-hidden="true"></i></div>
+                <!-- <a href="javascript:void(0);" class="ui__btn options-toggle"></a> -->
+                <a href="javascript:void(0);" class="ui__btn help-btn" data-overlay="help"></a>
+                <a href="javascript:void(0);" v-if='local_user_directory !== ""'>
+                    <div class="user-icon">{{ local_user_directory.substring(0,1) }}</div>
+                </a>
+                <!-- <a href="javascript:void(0);" class="ui__btn help-btn" data-overlay="grant"></a> -->
+            </div>
+            <!-- /.ui__menu -->
+            <div class="ui__info info-modal" id="upload-modal">
+                <h2>Upload String</h2>
+                <p>Simply enter some text here and it will be added and encrypted on the IPFS network</p>
+                <form action="#" method="POST" @submit.prevent="submit">
+                    <div><label>File Name</label><br><input type="text" required></div>
+                    <div><label>File Contents</label><br> <textarea name="Text1" cols="40" rows="5" required></textarea>
+                        <!-- <input type="text" required> -->
+                    </div>
+                    <button type="submit" class="btn">Upload</button>
+                </form>
+                <!-- <h2>Upload</h2>
+                <p>Simply drag & drop a file here or select one with the button below.</p>
+                <form action="#" method="POST">
+                    <div><input type="file" required></div>
+                    <button type="submit" class="btn">Upload</button>
+                </form> -->
+            </div>
+            <div class="ui__info info-modal" id="download-modal">
+                <h2>Import an encrypted file</h2>
+                <p>Simply enter some text here and it will be added and encrypted on the IPFS network</p>
+                <form action="javascript:void(0)" @submit.prevent="submit">
+                    <div><label>file ipfs cid</label><br><input type="text" id="d_ipfs_hash" required></div>
+                    <div><label>policy key</label><br><input type="text" id="d_policy_key" required></div>
+                    <div><label>signat key</label><br><input type="text" id="d_sign_key" required></div>
+                    <div><label>file label</label><br><input type="text" id="d_label" required></div>
+                    <form action="#" method="POST" @submit.prevent="submit">
+                        <a href="javascript:decrypt_file_raw();" class="btn overlay__close">download</a>
+                        <!-- <h2>Upload</h2>
+                <p>Simply drag & drop a file here or select one with the button below.</p>
+                <form action="#" method="POST">
+                    <div><input type="file" required></div>
+                    <button type="submit" class="btn">Upload</button>
+                </form> -->
+            </div>
+            <!-- /.ui__info -->
+            <!-- <div @click='copyTestingCode'>COPY</div> -->
+            <!-- {{ testingCode }} -->
+            <div class="encrypting-table">
+                <h4>Encrypt</h4>
+                <table class="file-list" id="file-table">
+                    <a href="javascript:void(0);" data-overlay="grant">
+                        <button class="my-permission-btn btn">Permissons</button>
+                    </a>
+                    <div class="mycheckedfiles">
+                        <div class="permission-btn" v-for="checked in checkedFiles">{{ checked.substring(0,4)+"..." }}</div>
+                    </div>
+                    <tr class="file-list__header">
+                        <th>Selected</th>
+                        <th onClick="sortTable(0)">Label <i class="fa fa-long-arrow-down"></i></th>
+                        <th onClick="sortTable(1)">IPFS hash</th>
+                        <th onClick="sortTable(2)">Type</th>
+                        <th onClick="sortTable(3, '123')">Size</th>
+                        <!-- <th>Tags</th> -->
+                    </tr>
+                    <tr class="file-list__file" v-for="file in files">
+                        <td>
+                            <!-- <label for="john">John</label> -->
+                            <input type="checkbox" v-bind:id="file.name" v-bind:value="file.name" v-model="checkedFiles">
+                        </td>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.ipfshash }}</td>
+                        <td>{{ file.type }}</td>
+                        <td>{{ file.size }}</td>
+                        <!-- <td>{{ file.tag }}</td> -->
+                    </tr>
+                </table>
+            </div>
+            <div class="encrypting-table-bottom">
+                <h4>Decrypt</h4>
+                <table class="file-list" id="file-table">
+                    <tr class="file-list__header">
+                        <!-- <th>Selected</th> -->
+                        <th onClick="">label <i class="fa fa-long-arrow-down"></i></th>
+                        <th onClick="">hash</th>
+                        <th onClick="">message</th>
+                        <!-- <th onClick="">Size</th> -->
+                        <!-- <th>Tags</th> -->
+                    </tr>
+                    <tr class="file-list__file" v-for="file in dfiles">
+                        <td>{{ file.label }}</td>
+                        <td>{{ file.hash }}</td>
+                        <td>{{ file.message }}</td>
+                        <!-- <td>{{ file.size }}</td> -->
+                    </tr>
+                </table>
+            </div>
+            <div class="shareables">
+                <pre class="toshare" v-for="checked in sharables">{{ checked }}</pre>
+                <!-- <pre v-if="sharables">{{ sharables }}</pre> -->
+            </div>
+            <!-- /.file-list -->
+        </main>
+        <!-- /.ui__main -->
+        <div class="login-drop" id="login-overlay">
+            <div class="overlay__inner" style="background: none">
+                <div id="log-spinner" style="display: none">
+                    <div class="lds-facebook">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                    <br />
+                    <p class="bright">Regenerating encryption keys</p>
+                </div>
+            </div>
+            <div class="overlay__inner" style="background: none" id="logger">
+                <p class="neon">Select user</p>
+                <div class="server-users">
+                    <div v-for="u in users" class="user" @click='selectUser'>
+                        <p>{{ u }}</p>
+                    </div>
+<!--                     <div class="user" @click='skipSelect'>
+                        <p>Skip</p>
+                    </div> -->
+                </div>
+                <p class="neon">Add new user</p>
+                <input type="text" name="" id="user-login" @keyup.enter="addNewUser">
+            </div>
+        </div>
+    </div>
+    <!-- /.ui -->
+    <div class="ui__overlay overlay" id="grant">
+        <div class="overlay__inner">
+            <p class="sublogo">Who do you want to share this file with?</p>
+            <label>enc_pubkey</label><br />
+            <input class="grant-inputs" type="text" id="enc_pubkey"><br />
+            <label>sig_pubkey</label><br />
+            <input class="grant-inputs" type="text" id="sig_pubkey"><br />
+            <!-- <a :href='grant_access' class="btn overlay__close">Grant Access</a> -->
+            <a href="javascript:grant_access_raw();" class="btn overlay__close">Grant</a>
+        </div>
+        <!-- /.overlay__inner -->
+    </div>
+    <!-- /.ui -->
+    <div class="ui__overlay overlay" id="help">
+        <div class="overlay__inner">
+            <span class="logo_header">NCIPFS</span>
+            <p class="sublogo">The easy way to securely IPFS</p>
+            <a style="color:#FFE792;" href="https://github.com/drbh/nucypher-ipfs">https://github.com/drbh/nucypher-ipfs</a>
+            <br />
+            <!-- <a href="javascript:void(0)" class="btn overlay__close">Oh no!</a> -->
+        </div>
+        <!-- /.overlay__inner -->
+    </div>
+    <!-- /.overlay -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js'></script>
+    <script src="js/index.js"></script>
+</body>
+
+</html>

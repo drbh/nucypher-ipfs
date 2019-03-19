@@ -201,5 +201,5 @@ class ncipfs(object):
 		columns = max_width - 12 - 27
 		scale = columns / 40
 		retrieval_time = "Retrieval time: {:8.2f} ms".format(1000 * (end - start))
-		line = heart_rate + "   " + retrieval_time
+		line = heart_rate# + "   " + retrieval_time
 		return line
